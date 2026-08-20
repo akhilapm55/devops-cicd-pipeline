@@ -4,7 +4,8 @@ pipeline {
     stages {
         stage('Test') {
             steps {
-                echo 'Running tests...'
+                bat 'python --version'
+                bat 'pytest -v'
             }
         }
 
