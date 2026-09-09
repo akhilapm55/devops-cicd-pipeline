@@ -1,3 +1,4 @@
+
 pipeline {
     agent any
 
@@ -29,33 +30,25 @@ pipeline {
             }
         }
 
-        stage('Test EC2 SSH') {
+        stage('Deploy to EC2') {
             steps {
                 sshagent(['ec2-ssh-key']) {
                     bat '''
-                        ssh -o StrictHostKeyChecking=no ec2-user@3.88.204.178 "echo EC2 SSH connection successful && docker --version"
+                        ssh -o StrictHostKeyChecking=no ec2-user@3.88.204.178 "docker pull akhilapm/devops-cicd-app:1.0 && docker stop devops-cicd-container || true && docker rm devops-cicd-container || true && docker run -d --name devops-cicd-container -p 5000:5000 akhilapm/devops-cicd-app:1.0"
                     '''
                 }
             }
         }
 
-        stage('Docker Run') {
-            steps {
-                bat 'docker run -d --name devops-cicd-container -p 5000:5000 devops-cicd-app:1.0'
-            }
-        }
-
         stage('Health Check') {
             steps {
-                bat 'powershell -Command "Start-Sleep -Seconds 5; $response = Invoke-WebRequest -Uri http://localhost:5000/health -UseBasicParsing; if ($response.StatusCode -ne 200) { exit 1 }"'
+                sshagent(['ec2-ssh-key']) {
+                    bat '''
+                        ssh -o StrictHostKeyChecking=no ec2-user@3.88.204.178 "sleep 5 && curl -f http://localhost:5000/health"
+                    '''
+                }
             }
-        }
-    }
-
-    post {
-        always {
-            bat 'docker stop devops-cicd-container 2>nul || exit /b 0'
-            bat 'docker rm devops-cicd-container 2>nul || exit /b 0'
         }
     }
 }
+
