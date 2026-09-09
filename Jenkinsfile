@@ -29,6 +29,16 @@ pipeline {
             }
         }
 
+        stage('Test EC2 SSH') {
+            steps {
+                sshagent(['ec2-ssh-key']) {
+                    bat '''
+                        ssh -o StrictHostKeyChecking=no ec2-user@3.88.204.178 "echo EC2 SSH connection successful && docker --version"
+                    '''
+                }
+            }
+        }
+
         stage('Docker Run') {
             steps {
                 bat 'docker run -d --name devops-cicd-container -p 5000:5000 devops-cicd-app:1.0'
