@@ -28,10 +28,10 @@ pipeline {
         }
     }
 
-    post {
-        always {
-            bat 'docker stop devops-cicd-container'
-            bat 'docker rm devops-cicd-container'
+        post {
+            always {
+                bat 'docker stop devops-cicd-container 2>nul || exit /b 0'
+                bat 'docker rm devops-cicd-container 2>nul || exit /b 0'
+            }
         }
-    }
 }
