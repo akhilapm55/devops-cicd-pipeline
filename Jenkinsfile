@@ -15,6 +15,20 @@ pipeline {
             }
         }
 
+        stage('Docker Push') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-credentials',
+                    usernameVariable: 'DOCKERHUB_USERNAME',
+                    passwordVariable: 'DOCKERHUB_TOKEN'
+                )]) {
+                    bat 'echo %DOCKERHUB_TOKEN%| docker login -u "%DOCKERHUB_USERNAME%" --password-stdin'
+                    bat 'docker tag devops-cicd-app:1.0 %DOCKERHUB_USERNAME%/devops-cicd-app:1.0'
+                    bat 'docker push %DOCKERHUB_USERNAME%/devops-cicd-app:1.0'
+                }
+            }
+        }
+
         stage('Docker Run') {
             steps {
                 bat 'docker run -d --name devops-cicd-container -p 5000:5000 devops-cicd-app:1.0'
@@ -28,10 +42,10 @@ pipeline {
         }
     }
 
-        post {
-            always {
-                bat 'docker stop devops-cicd-container 2>nul || exit /b 0'
-                bat 'docker rm devops-cicd-container 2>nul || exit /b 0'
-            }
+    post {
+        always {
+            bat 'docker stop devops-cicd-container 2>nul || exit /b 0'
+            bat 'docker rm devops-cicd-container 2>nul || exit /b 0'
         }
+    }
 }
